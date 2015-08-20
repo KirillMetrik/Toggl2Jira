@@ -15,6 +15,7 @@
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
 using Microsoft.Practices.ServiceLocation;
+using Toggl2Jira.Services;
 
 namespace Toggl2Jira.ViewModel
 {
@@ -43,6 +44,8 @@ namespace Toggl2Jira.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<IAppSettingsService, AppSettingsService>();
+            SimpleIoc.Default.Register<ITimePusher, TogglToJiraPusher>();
         }
 
         public MainViewModel Main

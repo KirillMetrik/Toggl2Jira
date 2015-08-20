@@ -1,4 +1,7 @@
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.CommandWpf;
+using Toggl2Jira.Model;
+using Toggl2Jira.Services;
 
 namespace Toggl2Jira.ViewModel
 {
@@ -16,11 +19,22 @@ namespace Toggl2Jira.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        private IAppSettingsService stgsService;
+        private AppSetting settings;
+
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel()
+        public MainViewModel(IAppSettingsService stgsService)
         {
+            this.stgsService = stgsService;
+            this.ReadSettings();
+
+            this.ClosingCommand = new RelayCommand(() =>
+            {
+                this.stgsService.SaveSettings(this.settings);
+            });
+
             ////if (IsInDesignMode)
             ////{
             ////    // Code runs in Blend --> create design time data.
@@ -29,6 +43,23 @@ namespace Toggl2Jira.ViewModel
             ////{
             ////    // Code runs "for real"
             ////}
+        }
+
+        public AppSetting Settings
+        {
+            get { return this.settings; }
+            set
+            {
+                this.settings = value;
+                this.RaisePropertyChanged("Settings");
+            }
+        }
+
+        public RelayCommand ClosingCommand { get; set; }
+
+        private void ReadSettings()
+        {
+            this.Settings = this.stgsService.ReadSettings();
         }
     }
 }
