@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using Toggl2Jira.Model;
@@ -5,6 +7,12 @@ using Toggl2Jira.Services;
 
 namespace Toggl2Jira.ViewModel
 {
+    /// <summary>
+    /// See KindOfMagic about these attributes.
+    /// </summary>
+    class MagicAttribute : Attribute { }
+    class NoMagicAttribute : Attribute { }
+
     /// <summary>
     /// This class contains properties that the main View can data bind to.
     /// <para>
@@ -20,19 +28,27 @@ namespace Toggl2Jira.ViewModel
     public class MainViewModel : ViewModelBase
     {
         private IAppSettingsService stgsService;
-        private AppSetting settings;
+        private ITimePusher timePusherService;
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel(IAppSettingsService stgsService)
+        public MainViewModel(IAppSettingsService stgsService, ITimePusher timePusherService)
         {
             this.stgsService = stgsService;
-            this.ReadSettings();
+            this.timePusherService = timePusherService;
+            this.Settings = this.stgsService.ReadSettings();
+
+            this.PostTimeEntries = new RelayCommand(async () =>
+            {
+                this.IsProcessing = true;
+                await this.timePusherService.PushTime(this.Settings, DateTime.Now.Date, DateTime.Now.AddDays(1).Date);
+                this.IsProcessing = false;
+            });
 
             this.ClosingCommand = new RelayCommand(() =>
             {
-                this.stgsService.SaveSettings(this.settings);
+                this.stgsService.SaveSettings(this.Settings);
             });
 
             ////if (IsInDesignMode)
@@ -45,21 +61,30 @@ namespace Toggl2Jira.ViewModel
             ////}
         }
 
-        public AppSetting Settings
-        {
-            get { return this.settings; }
-            set
-            {
-                this.settings = value;
-                this.RaisePropertyChanged("Settings");
-            }
-        }
+        [Magic]
+        public bool IsProcessing { get; set; }
+
+        [Magic]
+        public AppSetting Settings { get; set; }
 
         public RelayCommand ClosingCommand { get; set; }
 
-        private void ReadSettings()
+        public RelayCommand PostTimeEntries { get; set; }
+
+        private async void DoAction(Func<Task> action)
         {
-            this.Settings = this.stgsService.ReadSettings();
+            this.IsProcessing = true;
+            try
+            {
+                await action();
+            }
+            catch (Exception e)
+            {
+            }
+            finally
+            {
+                this.IsProcessing = false;
+            }
         }
     }
 }

@@ -1,16 +1,22 @@
-﻿<Window x:Class="Toggl2Jira.MainWindow"
+﻿<Controls:MetroWindow x:Class="Toggl2Jira.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:command="http://www.galasoft.ch/mvvmlight"
+        xmlns:t2juiConv="clr-namespace:T2J.UI.Converters;assembly=T2J.UI"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
-        Title="MainWindow" Height="350" Width="525" MinHeight="330" MinWidth="200" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="Toggl To Jira" Height="350" Width="525" MinHeight="330" MinWidth="200" Loaded="Window_Loaded" Closing="Window_Closing" Name="mainWindow"
+        EnableDWMDropShadow="True" ResizeMode="CanResizeWithGrip" WindowTransitionsEnabled="True" WindowStartupLocation="CenterScreen">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <command:EventToCommand Command="{Binding ClosingCommand}"
                             PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    <Window.Resources>
+        <t2juiConv:BoolToVisibilityConverter x:Key="BoolToVisibleConverter"></t2juiConv:BoolToVisibilityConverter>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"></RowDefinition>
@@ -20,7 +26,15 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <GroupBox Grid.Row="0" Grid.Column="0" Header="Toggl Credentials" Margin="10,0,10,0" VerticalAlignment="Top" Height="80" HorizontalAlignment="Stretch">
+        <Grid Grid.RowSpan="300"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+              Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVisibleConverter}}"
+              Panel.ZIndex="1000">
+            <Grid.Background>
+                <SolidColorBrush Color="White" Opacity=".6"/>
+            </Grid.Background>
+            <Controls:ProgressRing HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="{Binding IsProcessing}"></Controls:ProgressRing>
+        </Grid>
+        <GroupBox Grid.Row="0" Grid.Column="0" Header="Toggl Credentials" Margin="10,10,10,0" VerticalAlignment="Top" Height="80" HorizontalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="30">
@@ -56,6 +70,6 @@
                 <PasswordBox Grid.Row="2" Grid.Column="1"  HorizontalAlignment="Stretch" VerticalAlignment="Top" Name="pwdBox" ToolTip="User password in Jira"/>
             </Grid>
         </GroupBox>
-        <Button Grid.Row="2" Grid.Column="0" Content="Post" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" Width="75" />
+        <Button Grid.Row="2" Grid.Column="0" Content="Post" Command="{Binding PostTimeEntries}" ToolTip="Post time entries for today from Toggl to Jira" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10" Width="75" />
     </Grid>
-</Window>
+</Controls:MetroWindow>
