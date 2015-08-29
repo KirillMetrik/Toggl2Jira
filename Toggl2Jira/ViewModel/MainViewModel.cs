@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
+using MahApps.Metro.Controls.Dialogs;
 using Toggl2Jira.Model;
 using Toggl2Jira.Services;
 
@@ -27,29 +28,32 @@ namespace Toggl2Jira.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        private IProgressDialogService progressDialogService;
         private IAppSettingsService stgsService;
         private ITimePusher timePusherService;
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel(IAppSettingsService stgsService, ITimePusher timePusherService)
+        public MainViewModel(IProgressDialogService progressDialogService, IAppSettingsService stgsService, ITimePusher timePusherService)
         {
+            this.progressDialogService = progressDialogService;
             this.stgsService = stgsService;
             this.timePusherService = timePusherService;
             this.Settings = this.stgsService.ReadSettings();
 
             this.PostTimeEntries = new RelayCommand(async () =>
             {
-                this.IsProcessing = true;
+                var controller = await this.progressDialogService.ShowProgressUnknown(this, "title", "doing progress");
                 await this.timePusherService.PushTime(this.Settings, DateTime.Now.Date, DateTime.Now.AddDays(1).Date);
-                this.IsProcessing = false;
+                await controller.CloseAsync();
             });
 
             this.ClosingCommand = new RelayCommand(() =>
             {
                 this.stgsService.SaveSettings(this.Settings);
             });
+
 
             ////if (IsInDesignMode)
             ////{
@@ -70,21 +74,5 @@ namespace Toggl2Jira.ViewModel
         public RelayCommand ClosingCommand { get; set; }
 
         public RelayCommand PostTimeEntries { get; set; }
-
-        private async void DoAction(Func<Task> action)
-        {
-            this.IsProcessing = true;
-            try
-            {
-                await action();
-            }
-            catch (Exception e)
-            {
-            }
-            finally
-            {
-                this.IsProcessing = false;
-            }
-        }
     }
 }

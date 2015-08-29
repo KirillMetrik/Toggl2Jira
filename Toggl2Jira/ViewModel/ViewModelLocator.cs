@@ -44,7 +44,7 @@ namespace Toggl2Jira.ViewModel
             ////    SimpleIoc.Default.Register<IDataService, DataService>();
             ////}
 
-            SimpleIoc.Default.Register<IDialogService, DialogService>();
+            SimpleIoc.Default.Register<IProgressDialogService, MahProgressDialogService>();
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<IAppSettingsService, AppSettingsService>();
             SimpleIoc.Default.Register<ITimePusher, TogglToJiraPusher>();

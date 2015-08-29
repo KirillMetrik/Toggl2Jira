@@ -5,6 +5,8 @@
         xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:command="http://www.galasoft.ch/mvvmlight"
         xmlns:t2juiConv="clr-namespace:T2J.UI.Converters;assembly=T2J.UI"
+        xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+        Dialog:DialogParticipation.Register="{Binding}"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         Title="Toggl To Jira" Height="350" Width="525" MinHeight="330" MinWidth="200" Loaded="Window_Loaded" Closing="Window_Closing" Name="mainWindow"
         EnableDWMDropShadow="True" ResizeMode="CanResizeWithGrip" WindowTransitionsEnabled="True" WindowStartupLocation="CenterScreen">
@@ -14,9 +16,6 @@
                             PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <Window.Resources>
-        <t2juiConv:BoolToVisibilityConverter x:Key="BoolToVisibleConverter"></t2juiConv:BoolToVisibilityConverter>
-    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"></RowDefinition>
@@ -26,14 +25,6 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Grid Grid.RowSpan="300"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-              Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVisibleConverter}}"
-              Panel.ZIndex="1000">
-            <Grid.Background>
-                <SolidColorBrush Color="White" Opacity=".6"/>
-            </Grid.Background>
-            <Controls:ProgressRing HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="{Binding IsProcessing}"></Controls:ProgressRing>
-        </Grid>
         <GroupBox Grid.Row="0" Grid.Column="0" Header="Toggl Credentials" Margin="10,10,10,0" VerticalAlignment="Top" Height="80" HorizontalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
