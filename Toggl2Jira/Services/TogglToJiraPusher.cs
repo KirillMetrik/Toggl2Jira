@@ -17,6 +17,9 @@ namespace Toggl2Jira.Services
     {
         public Task PushTime(AppSetting settings, DateTime startDate, DateTime endDate)
         {
+            //flw6-2299
+
+            //throw new Exception("So bad, sorry!");
             return Task.Delay(5000);
             //return Task.Run(() =>
             //    {

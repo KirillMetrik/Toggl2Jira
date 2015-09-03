@@ -160,6 +160,7 @@
     </ApplicationDefinition>
     <Compile Include="Model\AppSetting.cs" />
     <Compile Include="Services\AppSettingsService.cs" />
+    <Compile Include="Services\Infrastructure\MessageDialogService.cs" />
     <Compile Include="Services\Infrastructure\ProgressDialogService.cs" />
     <Compile Include="Services\SQLiteActionProvider.cs" />
     <Compile Include="Services\TogglToJiraPusher.cs" />

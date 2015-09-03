@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
@@ -29,24 +30,25 @@ namespace Toggl2Jira.ViewModel
     public class MainViewModel : ViewModelBase
     {
         private IProgressDialogService progressDialogService;
+        private IMessageDlgService messageDlgService;
         private IAppSettingsService stgsService;
         private ITimePusher timePusherService;
 
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
-        public MainViewModel(IProgressDialogService progressDialogService, IAppSettingsService stgsService, ITimePusher timePusherService)
+        public MainViewModel(IMessageDlgService messageDlgService, 
+            IProgressDialogService progressDialogService, IAppSettingsService stgsService, ITimePusher timePusherService)
         {
             this.progressDialogService = progressDialogService;
+            this.messageDlgService = messageDlgService;
             this.stgsService = stgsService;
             this.timePusherService = timePusherService;
             this.Settings = this.stgsService.ReadSettings();
 
             this.PostTimeEntries = new RelayCommand(async () =>
             {
-                var controller = await this.progressDialogService.ShowProgressUnknown(this, "title", "doing progress");
-                await this.timePusherService.PushTime(this.Settings, DateTime.Now.Date, DateTime.Now.AddDays(1).Date);
-                await controller.CloseAsync();
+                await this.DoOp(() => this.timePusherService.PushTime(this.Settings, DateTime.Now.Date, DateTime.Now.AddDays(1).Date), "posting logged time for today", "Time entries for today have been successfully posted.");
             });
 
             this.ClosingCommand = new RelayCommand(() =>
@@ -74,5 +76,25 @@ namespace Toggl2Jira.ViewModel
         public RelayCommand ClosingCommand { get; set; }
 
         public RelayCommand PostTimeEntries { get; set; }
+
+        private async Task DoOp(Func<Task> func, string operationDescription = null, string successMessage = null)
+        {
+            ExceptionDispatchInfo error = null; // this allows to rethrow exception so that stack trace was saved
+            var progress = await this.progressDialogService.ShowProgressUnknown(this, "Please wait...", string.IsNullOrEmpty(operationDescription) ? "working" : operationDescription);
+            try
+            {
+                await func();
+            }
+            catch (Exception e)
+            {
+                error = ExceptionDispatchInfo.Capture(e);
+            }
+
+            await progress.CloseAsync();
+            if (error != null)
+                await this.messageDlgService.ShowError(this, "Oops!", error.SourceException);
+            else if (!string.IsNullOrEmpty(successMessage))
+                await this.messageDlgService.ShowMessage(this, "Finished", successMessage);
+        }
     }
 }
