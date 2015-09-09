@@ -49,7 +49,7 @@ namespace Toggl2Jira.Services
                         if (string.IsNullOrEmpty(description.Key))
                             continue;
 
-                        var issue = jira.GetIssue(/*description.Key*/"tra-74");
+                        var issue = jira.GetIssue(description.Key);
                         issue.AddWorklog(new Worklog(this.GetMinutes(te.Duration.GetValueOrDefault()), DateTime.Parse(te.Start), description.Value));
                         if (te.TagNames == null)
                             te.TagNames = new List<string>();

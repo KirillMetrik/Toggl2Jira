@@ -48,7 +48,7 @@ namespace Toggl2Jira.ViewModel
 
             this.PostTimeEntries = new RelayCommand(async () =>
             {
-                await this.DoOp(() => this.timePusherService.PushTime(this.Settings, DateTime.Now.AddDays(-10).Date, DateTime.Now.AddDays(1).Date), "posting logged time for today", "Time entries for today have been successfully posted.");
+                await this.DoOp(() => this.timePusherService.PushTime(this.Settings, DateTime.Now.Date, DateTime.Now.AddDays(1).Date), "posting logged time for today", "Time entries for today have been successfully posted.");
             });
 
             this.ClosingCommand = new RelayCommand(() =>
