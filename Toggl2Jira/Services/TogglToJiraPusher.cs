@@ -31,7 +31,7 @@ namespace Toggl2Jira.Services
             this.VerifySetting(settings.JiraUrl, "JIRA URL");
             this.VerifySetting(settings.TogglApiKey, "Toggl API Key");
 
-            var jira = new Jira(settings.JiraUrl, settings.JiraLogin, settings.JiraPassword);
+            var jira = Jira.CreateRestClient(settings.JiraUrl, settings.JiraLogin, settings.JiraPassword);
             var toggl = new Toggl.Toggl(settings.TogglApiKey);
 
             return Task.Run(() =>
@@ -49,12 +49,18 @@ namespace Toggl2Jira.Services
                         if (string.IsNullOrEmpty(description.Key))
                             continue;
 
-                        var issue = jira.GetIssue(description.Key);
-                        issue.AddWorklog(new Worklog(this.GetMinutes(te.Duration.GetValueOrDefault()), DateTime.Parse(te.Start), description.Value));
-                        if (te.TagNames == null)
-                            te.TagNames = new List<string>();
-                        te.TagNames.Add(POSTED_TAG);
-                        timeService.Edit(te);
+                        jira.Issues.GetIssueAsync(description.Key).ContinueWith(issue =>
+                        {
+                            issue.Result.AddWorklogAsync(new Worklog(this.GetMinutes(te.Duration.GetValueOrDefault()), DateTime.Parse(te.Start), description.Value))
+                            .ContinueWith(wl =>
+                            {
+                                if (te.TagNames == null)
+                                    te.TagNames = new List<string>();
+                                te.TagNames.Add(POSTED_TAG);
+                                timeService.Edit(te);
+                            });
+                        });
+                        
                     }
                 });
 
