@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace Toggl2Jira.Services
     {
         private const string POSTED_TAG = "t2j:posted";
 
-        public Task PushTime(AppSetting settings, DateTime startDate, DateTime endDate)
+        public async Task PushTime(AppSetting settings, DateTime startDate, DateTime endDate)
         {
             //tra-74
 
@@ -34,7 +35,7 @@ namespace Toggl2Jira.Services
             var jira = Jira.CreateRestClient(settings.JiraUrl, settings.JiraLogin, settings.JiraPassword);
             var toggl = new Toggl.Toggl(settings.TogglApiKey);
 
-            return Task.Run(() =>
+            await Task.Run(async () =>
                 {
                     var timeService = new TimeEntryService(settings.TogglApiKey);
                     var timeParams = new TimeEntryParams();
@@ -45,22 +46,19 @@ namespace Toggl2Jira.Services
                     foreach (var te in timeService.List(timeParams).Where(w => (w.TagNames == null || !w.TagNames.Contains(POSTED_TAG))
                                                                                 && !string.IsNullOrEmpty(w.Description)))
                     {
+                        //Debug.WriteLine(te.Start);
+                        //Debug.WriteLine(DateTime.Parse(te.Start));
                         KeyValuePair<string, string> description = this.ParseDescription(te.Description);
                         if (string.IsNullOrEmpty(description.Key))
                             continue;
 
-                        jira.Issues.GetIssueAsync(description.Key).ContinueWith(issue =>
-                        {
-                            issue.Result.AddWorklogAsync(new Worklog(this.GetMinutes(te.Duration.GetValueOrDefault()), DateTime.Parse(te.Start), description.Value))
-                            .ContinueWith(wl =>
-                            {
-                                if (te.TagNames == null)
-                                    te.TagNames = new List<string>();
-                                te.TagNames.Add(POSTED_TAG);
-                                timeService.Edit(te);
-                            });
-                        });
-                        
+                        var issue = await jira.Issues.GetIssueAsync(description.Key);
+                        await issue.AddWorklogAsync(new Worklog(this.GetMinutes(te.Duration.GetValueOrDefault()), DateTime.Parse(te.Start), description.Value));
+
+                        if (te.TagNames == null)
+                            te.TagNames = new List<string>();
+                        te.TagNames.Add(POSTED_TAG);
+                        timeService.Edit(te);
                     }
                 });
 
