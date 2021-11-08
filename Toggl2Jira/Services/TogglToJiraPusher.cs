@@ -6,8 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Atlassian.Jira;
-using Toggl.QueryObjects;
-using Toggl.Services;
+using Toggl.Api;
+using Toggl.Api.QueryObjects;
 using Toggl2Jira.Model;
 
 namespace Toggl2Jira.Services
@@ -33,21 +33,35 @@ namespace Toggl2Jira.Services
             this.VerifySetting(settings.TogglApiKey, "Toggl API Key");
 
             var jira = Jira.CreateRestClient(settings.JiraUrl, settings.JiraLogin, settings.JiraPassword);
-            var toggl = new Toggl.Toggl(settings.TogglApiKey);
+            var toggl = new TogglClient(settings.TogglApiKey);
 
             await Task.Run(async () =>
                 {
-                    var timeService = new TimeEntryService(settings.TogglApiKey);
                     var timeParams = new TimeEntryParams();
 
                     timeParams.StartDate = startDate.Date;
                     timeParams.EndDate = endDate.Date;
+                    var entries = await toggl.TimeEntries.GetAllAsync(timeParams);
 
-                    foreach (var te in timeService.List(timeParams).Where(w => (w.TagNames == null || !w.TagNames.Contains(POSTED_TAG))
+                    foreach (var te in entries.Where(w => (w.TagNames == null || !w.TagNames.Contains(POSTED_TAG))
                                                                                 && !string.IsNullOrEmpty(w.Description)))
                     {
-                        //Debug.WriteLine(te.Start);
-                        //Debug.WriteLine(DateTime.Parse(te.Start));
+                        Debug.WriteLine(te.CreatedOn);
+                        Debug.WriteLine(te.UpdatedOn);
+                        Debug.WriteLine(te.Start);
+                        Debug.WriteLine(te.Stop);
+
+                        // have to manually convert DateTime to correct format for Toggl API (client library doesn't do it)
+                        te.UpdatedOn = DateTime.Parse(te.UpdatedOn).ToUniversalTime().ToString("o");
+                        te.Start = DateTime.Parse(te.Start).ToUniversalTime().ToString("o");
+                        te.Stop = DateTime.Parse(te.Stop).ToUniversalTime().ToString("o");
+
+                        Debug.WriteLine(te.CreatedOn);
+                        Debug.WriteLine(te.UpdatedOn);
+                        Debug.WriteLine(te.Start);
+                        Debug.WriteLine(te.Stop);
+
+
                         KeyValuePair<string, string> description = this.ParseDescription(te.Description);
                         if (string.IsNullOrEmpty(description.Key))
                             continue;
@@ -58,7 +72,7 @@ namespace Toggl2Jira.Services
                         if (te.TagNames == null)
                             te.TagNames = new List<string>();
                         te.TagNames.Add(POSTED_TAG);
-                        timeService.Edit(te);
+                        await toggl.TimeEntries.UpdateAsync(te);
                     }
                 });
 
